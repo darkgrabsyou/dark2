@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Bouncy Hacker</title>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-image: url('cloudbackground.png');
+        background-size: cover;
+      }
+
+      canvas {
+        display: block;
+      }
+
+      .menu {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 999;
+      }
+
+      .menu h1 {
+        color: white;
+        font-size: 48px;
+        font-family: 'Arial', sans-serif;
+        margin-bottom: 50px;
+      }
+
+      .menu button {
+        padding: 10px 20px;
+        font-size: 24px;
+        font-family: 'Arial', sans-serif;
+        margin-bottom: 20px;
+      }
+
+      .menu .score {
+        color: white;
+        font-size: 20px;
+        font-family: 'Arial', sans-serif;
+        margin-bottom: 10px;
+      }
+
+      /* Jump button */
+      .jump-button {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: purple;
+        border: 2px solid black;
+        z-index: 999;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="menu">
+      <h1>Bouncy Hacker</h1>
+      <button onclick="startGame()">Play</button>
+      <button onclick="exitGame()">Exit</button>
+      <div class="score">
+        Score: <span id="currentScore">0</span>
+      </div>
+      <div class="score">
+        High Score: <span id="highScore">0</span>
+      </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+      var canvas = document.getElementById("gameCanvas");
+      var ctx = canvas.getContext("2d");
+
+      var hackerImg = new Image();
+      hackerImg.src = "hackermask.png";
+
+      var defaultGravity = 4.0;
+      var jumpGravity = 3.0;
+      var jumpForce = -20;
+      var maxJumpForce = -20;
+      var maxJumpHeight = -200;
+      var hackerX = 50;
+      var hackerY = canvas.height / 2;
+      var tubes = [];
+      var tubeGap = 200;
+      var tubeWidth = 50;
+      var tubeSpacing = 500;
+      var tubeSpeed = 2;
+      var score = 0;
+      var highScore = 0;
+      var isJumping = false;
+      var gravityTimer = 0;
+      var gravityDuration = 0.5; // in seconds
+      var gameStarted = false;
+      var isGameOver = false;
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      document.addEventListener("keydown", jump);
+
+      function jump(event) {
+        if (!gameStarted || isGameOver) return; // Ignore jump if the game hasn't started or game over
+
+        if (event.code === "Space") {
+          if (!isJumping) {
+            isJumping = true;
+            jumpForce = maxJumpForce;
+            gravityTimer = gravityDuration;
+            gravity = jumpGravity;
+          }
+        }
+      }
+
+      function generateTubes() {
+        var holePosition = Math.floor(Math.random() * 3); // 0 for top, 1 for middle, 2 for bottom
+        var tubeY;
+
+        switch (holePosition) {
+          case 0:
+            tubeY = 0;
+            break;
+          case 1:
+            tubeY = canvas.height / 2 - tubeGap / 2;
+            break;
+          case 2:
+            tubeY = canvas.height - tubeGap;
+            break;
+        }
+
+        tubes.push({
+          x: canvas.width,
+          y: tubeY,
+          scored: false // Added scored property to keep track of scoring
+        });
+      }
+
+      function drawTubes() {
+        for (var i = 0; i < tubes.length; i++) {
+          var tube = tubes[i];
+
+          ctx.fillStyle = "black";
+          ctx.fillRect(tube.x, 0, tubeWidth, tube.y);
+          ctx.fillRect(
+            tube.x,
+            tube.y + tubeGap,
+            tubeWidth,
+            canvas.height - tube.y - tubeGap
+          );
+        }
+      }
+
+      function moveTubes() {
+        for (var i = 0; i < tubes.length; i++) {
+          var tube = tubes[i];
+
+          tube.x -= tubeSpeed;
+
+          if (tube.x + tubeWidth < 0) {
+            tubes.splice(i, 1);
+            i--;
+          }
+        }
+      }
+
+      function checkCollision() {
+        var hackerHeadX = hackerX; // Adjust the position of the hitbox
+        var hackerHeadY = hackerY;
+        var hackerHeadWidth = 100; // Adjust the width of the hitbox
+        var hackerHeadHeight = 60; // Adjust the height of the hitbox
+
+  // New code for "crushed" effect
+  var hackerWidth = 100; // Adjust the hacker's width
+  var hackerHeight = 60; // Adjust the hacker's height
+
+  for (var i = 0; i < tubes.length; i++) {
+    var tube = tubes[i];
+
+    if (
+      hackerHeadX + hackerWidth > tube.x &&
+      hackerHeadX < tube.x + tubeWidth &&
+      (hackerHeadY < tube.y || hackerHeadY + hackerHeadHeight > tube.y + tubeGap)
+    ) {
+      // Collision detected, game over
+      ctx.drawImage(hackerX, hackerY, hackerWidth, hackerHeight);
+      gameOver();
+      return;
+    }
+
+          if (hackerHeadX > tube.x + tubeWidth && !tube.scored) {
+            tube.scored = true;
+            score++;
+            document.getElementById("currentScore").textContent = score; // Update current score in real-time
+          }
+        }
+
+        if (hackerHeadY + hackerHeadHeight > canvas.height || hackerHeadY < 0) {
+          // Collision with top or bottom screen edge, game over
+          gameOver();
+        }
+      }
+
+      function saveHighScore() {
+        localStorage.setItem("highScore", highScore);
+      }
+
+      function loadHighScore() {
+        var savedHighScore = localStorage.getItem("highScore");
+        if (savedHighScore !== null) {
+          highScore = parseInt(savedHighScore);
+          document.getElementById("highScore").textContent = highScore;
+        }
+      }
+
+      function updateHighScore() {
+        if (score > highScore) {
+          highScore = score;
+          document.getElementById("highScore").textContent = highScore;
+          saveHighScore();
+        }
+      }
+
+      function startGame() {
+        if (isGameOver) {
+          // Reset game state
+          isGameOver = false;
+          score = 0;
+          hackerX = 50;
+          hackerY = canvas.height / 2;
+          tubes = [];
+          document.getElementById("currentScore").textContent = score;
+        }
+
+        gameStarted = true;
+        document.querySelector(".menu").style.display = "none";
+        update();
+      }
+
+      function exitGame() {
+        window.location.href = "https://bit.ly/m/darkmods";
+      }
+
+      function gameOver() {
+        updateHighScore();
+
+        gameStarted = false;
+        isGameOver = true;
+        document.querySelector(".menu").style.display = "flex";
+        document.getElementById("currentScore").textContent = score;
+      }
+
+      function update() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (isJumping) {
+          hackerY += jumpForce;
+          jumpForce += defaultGravity;
+
+          if (jumpForce >= 0) {
+            isJumping = false;
+            gravity = defaultGravity;
+          }
+        } else if (!isGameOver) {
+          hackerY += defaultGravity;
+        }
+
+        if (tubes.length === 0 || tubes[tubes.length - 1].x < canvas.width - tubeSpacing) {
+          generateTubes();
+        }
+
+        moveTubes();
+        drawTubes();
+
+        ctx.drawImage(hackerImg, hackerX, hackerY, 100, 60); // Adjusted hacker image position and size
+
+        checkCollision();
+
+        if (!isGameOver) {
+          requestAnimationFrame(update);
+        }
+      }
+
+      hackerImg.onload = function () {
+        ctx.drawImage(hackerImg, hackerX, hackerY, 100, 60); // Adjusted hacker image position and size
+      };
+
+      loadHighScore();
+    </script>
+  </body>
+</html>
