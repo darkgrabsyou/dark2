@@ -1,0 +1,57 @@
+/* styles.css */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-image: url('cloudbackground.png');
+  background-size: cover;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+}
+
+.menu h1 {
+  color: black;
+  font-size: 48px;
+  font-family: 'Arial', sans-serif;
+  margin-bottom: 50px;
+}
+
+.menu button {
+  padding: 10px 0; /* Remove the horizontal padding */
+  font-size: 24px;
+  font-family: 'Arial', sans-serif;
+  margin-bottom: 20px;
+  background-color: purple;
+  color: black;
+  border: 2px solid black;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 50%; /* Set the button width to 50% */
+  text-align: center; /* Center-align the button text */
+}
+
+.menu button:hover {
+  background-color: #8a2be2;
+}
+
+.menu .score {
+  color: white;
+  font-size: 48px; /* Increase the font size for the score text */
+  font-family: 'Arial', sans-serif;
+  margin-bottom: 10px;
+  }
